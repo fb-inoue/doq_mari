@@ -20,6 +20,7 @@ class Field {
     image;
 
     // 数値
+    medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
     x_1;
     y_1;
     x_2;
@@ -37,7 +38,7 @@ class Field {
         }
 
         this.image = new Image();
-        this.image.src = "../docMarri/img/gameover.jpg";
+        this.image.src = "../doq_mari/img/gameover.jpg";
 
         const canvas = document.querySelector('canvas');
         this.ctx = canvas.getContext('2d');
@@ -55,16 +56,13 @@ class Field {
         this.gameField = gameField;
         
         this.newMedicine();
-        this.fieldUpdate('down');
+        this.fieldCheck('down');
     } 
 
     updateMoveFlag() {
         var gameField = this.gameField;
 
-        var x_1 = this.x_1;
-        var x_2 = this.x_2;
-        var y_1 = this.y_1;
-        var y_2 = this.y_2;
+        var {x_1, x_2, y_1, y_2} = this.medic;
 
         var up = x_1 + 1;
         var down = Math.max(x_1, x_2) + 1;
@@ -85,35 +83,51 @@ class Field {
 
         var color_1 = gameField[0][3]?.color? gameField[0][3]?.color: undefined;
         var color_2 = gameField[0][4]?.color? gameField[0][4]?.color: undefined;
-
-        this.x_1 = 2;
-        this.x_2 = 2;
-        this.y_1 = 3;
-        this.y_2 = 4;
-
+        
+        this.medic = {x_1 : 2, y_1 : 3, x_2 : 2, y_2 : 4};
         this.updateMoveFlag();
 
-        gameField[this.x_1][this.y_1] = new MedicineAndBug(color_1);
-        gameField[this.x_2][this.y_2] = new MedicineAndBug(color_2);
+        var {x_1, x_2, y_1, y_2} = this.medic;
+
+        gameField[x_1][y_1] = new MedicineAndBug(color_1);
+        gameField[x_2][y_2] = new MedicineAndBug(color_2);
 
         gameField[0][3] = new MedicineAndBug();
         gameField[0][4] = new MedicineAndBug();
     }
 
-    fieldUpdate(key) {
+    fieldCheck(key) {
         var gameField = this.gameField;
         var downFlag = this.flagMove['down'];
 
         this.updateMoveFlag();
 
+        var {x_1, x_2, y_1, y_2} = this.medic;
+
         if(downFlag && this.flagMove['down'] && key.indexOf('Down') >= 0){
-            gameField[this.x_1][this.y_1].pair_x = this.x_2;
-            gameField[this.x_1][this.y_1].pair_y = this.y_2;
-            gameField[this.x_2][this.y_2].pair_x = this.x_1;
-            gameField[this.x_2][this.y_2].pair_y = this.y_1;
-            this.checkContinue4()
+            gameField[x_1][y_1].pair_x = this.medic.x_2;
+            gameField[x_1][y_1].pair_y = this.medic.y_2;
+            gameField[x_2][y_2].pair_x = this.medic.x_1;
+            gameField[x_2][y_2].pair_y = this.medic.y_1;
+
+            this.medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
+
+            this.checkContinue4();
             this.newMedicine();
         }
+
+        this.fieldUpdate()
+
+        if(this.gameOverFlag){
+            this.stopTimer();
+            this.ctx.drawImage(this.image, 1, 300, 358, 200);
+        }else if (!this.timerFlag) {
+            this.startTimer();
+        }
+    }
+
+    fieldUpdate() {
+        var gameField = this.gameField;
 
         gameField.forEach((rows, row) => {
             rows.forEach((cell , col) => {
@@ -122,12 +136,6 @@ class Field {
                 this.ctx.fillRect(1 + (col * 45), 1 + (row * 45), 43, 43);
             });
         });
-        if(this.gameOverFlag){
-            this.stopTimer();
-            this.ctx.drawImage(this.image, 1, 300, 358, 200);
-        }else if (!this.timerFlag) {
-            this.startTimer();
-        }
     }
 
     startTimer() {
@@ -160,7 +168,7 @@ class Field {
                     end++;
                     count++;
                 } 
-                if(!continueFlag || end == 8){
+                if(!continueFlag || end == 9){
                     if(count >= 4) {
                         for(var i = start; i < end - 1; i ++) {
                             clearField.push([row, i]);
@@ -175,7 +183,7 @@ class Field {
                 }
             } while (end <= 9);
         });
-        for(var col = 2; col < 19; col ++) {
+        for(var col = 0; col < 8; col ++) {
             var cols = gameField.map((rows) => rows[col]);
             var start = 0;
             var end = 4;
@@ -192,7 +200,7 @@ class Field {
                     end++;
                     count++;
                 } 
-                if(!continueFlag || end == 18){
+                if(!continueFlag || end == 19){
                     if(count >= 4) {
                         for(var i = start; i < end - 1; i ++) {
                             clearField.push([i, col]);
@@ -224,68 +232,67 @@ class Field {
         var flagMove = this.flagMove;
         var gameField = this.gameField;
 
-        var y_1 = this.y_1;
-        var x_2 = this.x_2;
-        var x_1 = this.x_1;
-        var y_2 = this.y_2;
+        var {x_1, x_2, y_1, y_2} = this.medic;
+
 
         var cell_1 = Object.assign({}, gameField[x_1][y_1]);
         var cell_2 = Object.assign({}, gameField[x_2][y_2]);
 
-        gameField[x_1][y_1] = null;
-        gameField[x_2][y_2] = null;
+        gameField[x_1][y_1] = gameField[x_2][y_2] = null;
 
         switch(key) {
             case 'ArrowRight':
                 if(y_1 + y_2 < 13 && !flagMove['right']) {
-                    this.y_1 ++;
-                    this.y_2 ++;
+                    y_1 ++;
+                    y_2 ++;
                 }
                 break;
             case 'ArrowLeft':
                 if(y_1 + y_2 > 1  && !flagMove['left']) {
-                    this.y_1 --;
-                    this.y_2 --;
+                    y_1 --;
+                    y_2 --;
                 }
                 break;
             case 'ArrowDown':
                 if(!flagMove['down']) this.stopTimer();
             case 'Down':
                 if(x_1 + x_2 < 33 && !flagMove['down']) {
-                    this.x_1 ++;
-                    this.x_2 ++;
+                    x_1 ++;
+                    x_2 ++;
                 }
                 break;
             case 'ArrowUp':
                 if(y_1 == y_2) {
                     if(this.flagMove['left'] && this.flagMove['right']) break;
                     if(x_1 < x_2) {
-                        this.x_1++;
-                        this.y_1++;
+                        x_1++;
+                        y_1++;
                     }else{
                         if(this.flagMove['up']) break;
-                        this.x_2++;
-                        this.y_2++;
+                        x_2++;
+                        y_2++;
                     }
                 }else{
                     if(y_1 < y_2) {
-                        this.x_1--;
-                        this.y_2--;
+                        x_1--;
+                        y_2--;
                     }else{
-                        this.x_2--;
-                        this.y_1--;
+                        x_2--;
+                        y_1--;
                     }
                 }
-                if(y_1 + y_2 == 14 || (y_1 == y_2 && this.flagMove['right'])) {
-                    this.y_1 --;
-                    this.y_2 --;
+                if(y_1 + y_2 == 14 || (y_1 != y_2 && this.flagMove['right'])) {
+                    y_1 --;
+                    y_2 --;
                 }
         }
         
-        gameField[this.x_1][this.y_1] = cell_1;
-        gameField[this.x_2][this.y_2] = cell_2;
+        gameField[x_1][y_1] = cell_1;
+        gameField[x_2][y_2] = cell_2;
 
-        this.fieldUpdate(key);
+        this.medic = {x_1, y_1, x_2, y_2};
+
+        this.fieldCheck(key);
     }
 }
 
