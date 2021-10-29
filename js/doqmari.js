@@ -61,18 +61,19 @@ class Field {
 
     updateMoveFlag() {
         var gameField = this.gameField;
+        var flagMove = this.flagMove
 
         var {x_1, x_2, y_1, y_2} = this.medic;
 
-        var up = x_1 + 1;
+        var up = x_1 - 1;
         var down = Math.max(x_1, x_2) + 1;
         var left = Math.min(y_1, y_2) - 1;
         var right = Math.max(y_1, y_2) + 1;
 
-        this.flagMove['up'] = Boolean(gameField[up][left]);
-        this.flagMove['down'] = (gameField[down][y_1] || gameField[down][y_2] || down === 18);
-        this.flagMove['left'] = (gameField[x_1][left] || gameField[x_2][left] || left === -1);
-        this.flagMove['right'] = (gameField[x_1][right] || gameField[x_2][right] || right === 8);
+        flagMove['up'] = Boolean(gameField[up][left + 1]);
+        flagMove['down'] = (gameField[down][y_1] || gameField[down][y_2] || down === 18);
+        flagMove['left'] = (gameField[x_1][left] || gameField[x_2][left] || left === -1);
+        flagMove['right'] = (gameField[x_1][right] || gameField[x_2][right] || right === 8);
     }
 
     newMedicine () {
@@ -225,14 +226,18 @@ class Field {
             }
             gameField[address[0]][address[1]] = null;
         });
+        var flag = false;
+        if(clearField[0]) flag = true;
+
+        return flag;
     }
 
     moveMedic (key = 'Down') {   
         if(this.gameOverFlag) return;
-        var flagMove = this.flagMove;
         var gameField = this.gameField;
 
         var {x_1, x_2, y_1, y_2} = this.medic;
+        var {right, left, up, down} = this.flagMove;
 
 
         var cell_1 = Object.assign({}, gameField[x_1][y_1]);
@@ -242,37 +247,37 @@ class Field {
 
         switch(key) {
             case 'ArrowRight':
-                if(y_1 + y_2 < 13 && !flagMove['right']) {
+                if(y_1 + y_2 < 13 && !right) {
                     y_1 ++;
                     y_2 ++;
                 }
                 break;
             case 'ArrowLeft':
-                if(y_1 + y_2 > 1  && !flagMove['left']) {
+                if(y_1 + y_2 > 1  && !left) {
                     y_1 --;
                     y_2 --;
                 }
                 break;
             case 'ArrowDown':
-                if(!flagMove['down']) this.stopTimer();
+                if(!down) this.stopTimer();
             case 'Down':
-                if(x_1 + x_2 < 33 && !flagMove['down']) {
+                if(x_1 + x_2 < 33 && !down) {
                     x_1 ++;
                     x_2 ++;
                 }
                 break;
             case 'ArrowUp':
                 if(y_1 == y_2) {
-                    if(this.flagMove['left'] && this.flagMove['right']) break;
+                    if(left && right) break;
                     if(x_1 < x_2) {
                         x_1++;
                         y_1++;
                     }else{
-                        if(this.flagMove['up']) break;
                         x_2++;
                         y_2++;
                     }
                 }else{
+                    if(up) break;
                     if(y_1 < y_2) {
                         x_1--;
                         y_2--;
@@ -281,7 +286,7 @@ class Field {
                         y_1--;
                     }
                 }
-                if(y_1 + y_2 == 14 || (y_1 != y_2 && this.flagMove['right'])) {
+                if(y_1 + y_2 == 14 || (y_1 != y_2 && right)) {
                     y_1 --;
                     y_2 --;
                 }
@@ -293,6 +298,10 @@ class Field {
         this.medic = {x_1, y_1, x_2, y_2};
 
         this.fieldCheck(key);
+    }
+
+    dropdown () {
+        
     }
 }
 
