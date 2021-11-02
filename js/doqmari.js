@@ -2,10 +2,11 @@ class Doqmari {
     game;
     onClick() {
         var game = this.game;
+        const txtbox = document.getElementById('level');
         if(game) {
             game.stopTimer();
         }
-        this.game = new Field();
+        this.game = new Field(txtbox.value);
     }
 }
 
@@ -17,28 +18,32 @@ class Field {
     gameField;
     color = color;
     downTimer;
-    image;
+    image = [new Image(), new Image()];
+    bacteriaImage = [new Image(), new Image(), new Image()];
 
     // 数値
     medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
-    x_1;
-    y_1;
-    x_2;
-    y_2;
-    timer = 1000;
+    timer = 700;
 
     // フラグ系
     flagMove = {up : false, down : false, left : false, right : false};
     timerFlag = false;
     gameOverFlag = false;
+    gameClearFlag = false;
 
-    constructor() {
+    constructor(level) {
         window.onkeydown = (event) => {
             this.moveMedic(event.code);
         }
 
-        this.image = new Image();
-        this.image.src = "../doq_mari/img/gameover.jpg";
+        this.image[0].src = "../doq_mari/img/gameover.png";
+        this.image[1].src = "../doq_mari/img/gameclear.png";
+
+        this.bacteriaImage[0].src = "../doq_mari/img/akakin.png";
+        this.bacteriaImage[1].src = "../doq_mari/img/aokin.png";
+        this.bacteriaImage[2].src = "../doq_mari/img/kikin.png";
+
+
 
         const canvas = document.querySelector('canvas');
         this.ctx = canvas.getContext('2d');
@@ -53,11 +58,40 @@ class Field {
         for(var r = 0; r < gameField.length; r ++) {
             gameField[r] = new Array(8);
         }
+
+        gameField[0][3] = new MedicineAndBug();
+        gameField[0][4] = new MedicineAndBug();
+
         this.gameField = gameField;
+
+        this.bacterialOutbreak(level);
         
         this.newMedicine();
         this.fieldCheck('down');
     } 
+
+    bacterialOutbreak(level) {
+        var gameField = this.gameField;
+        var bacterialCount = 4 + (4 * level);
+
+        const rundField = (level) => {
+            var lBound = 16 - Math.ceil(level / 2);
+            var row = lBound + Math.floor(Math.random() * (18 - lBound));
+            var col = Math.floor(Math.random() * 8);
+            return [row, col];
+        }
+
+        for(var i = 0; i < bacterialCount; i++) {
+            var createFlag = true;
+            do {
+                var [row, col] = rundField(level);
+                if(!gameField[row][col]) {
+                    gameField[row][col] = new MedicineAndBug();
+                    createFlag = false;
+                }
+            } while (createFlag);
+        }
+    }
 
     updateMoveFlag() {
         var gameField = this.gameField;
@@ -81,17 +115,14 @@ class Field {
         
         if(gameField[2][3]) this.gameOverFlag = true;
         if(gameField[2][4]) this.gameOverFlag = true;
-
-        var color_1 = gameField[0][3]?.color? gameField[0][3]?.color: undefined;
-        var color_2 = gameField[0][4]?.color? gameField[0][4]?.color: undefined;
         
         this.medic = {x_1 : 2, y_1 : 3, x_2 : 2, y_2 : 4};
         this.updateMoveFlag();
 
         var {x_1, x_2, y_1, y_2} = this.medic;
 
-        gameField[x_1][y_1] = new MedicineAndBug(color_1);
-        gameField[x_2][y_2] = new MedicineAndBug(color_2);
+        gameField[x_1][y_1] = Object.assign({}, gameField[0][3]);
+        gameField[x_2][y_2] = Object.assign({}, gameField[0][4]);
 
         gameField[0][3] = new MedicineAndBug();
         gameField[0][4] = new MedicineAndBug();
@@ -113,15 +144,24 @@ class Field {
 
             this.medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
 
-            this.checkContinue4();
+            var loopFlag = false;
+            loopFlag = this.checkContinue4()
+            do {
+                this.dropdown();
+
+                loopFlag = this.checkContinue4()
+            } while(loopFlag);
             this.newMedicine();
         }
 
-        this.fieldUpdate()
+        this.fieldUpdate();
 
         if(this.gameOverFlag){
             this.stopTimer();
-            this.ctx.drawImage(this.image, 1, 300, 358, 200);
+            this.ctx.drawImage(this.image[0], 1, 300, 358, 150);
+        } else if(this.gameClearFlag) {
+            this.stopTimer();
+            this.ctx.drawImage(this.image[1], 1, 300, 358, 150);
         }else if (!this.timerFlag) {
             this.startTimer();
         }
@@ -129,14 +169,27 @@ class Field {
 
     fieldUpdate() {
         var gameField = this.gameField;
+        var gameClearFlag = true;
 
+        var {x_1, y_1, x_2, y_2} = this.medic;
         gameField.forEach((rows, row) => {
             rows.forEach((cell , col) => {
                 if(row == 1) return true;
-                this.ctx.fillStyle = (this.color[cell?.color]) ? this.color[cell.color] :'black';
-                this.ctx.fillRect(1 + (col * 45), 1 + (row * 45), 43, 43);
+                if(cell) {
+                    if(cell.pair_x || cell.move || (x_1 == row && y_1 == col) || (x_2 == row && y_2 == col) || row == 0) {
+                        this.ctx.fillStyle = this.color[cell.color];
+                        this.ctx.fillRect(1 + (col * 45), 1 + (row * 45), 43, 43);
+                    } else {
+                        this.ctx.drawImage(this.bacteriaImage[cell?.color - 1], 1 + (col * 45), 1 + (row * 45), 43, 43);
+                        gameClearFlag = false;
+                    }
+                } else {
+                    this.ctx.fillStyle = 'black';
+                    this.ctx.fillRect(1 + (col * 45), 1 + (row * 45), 43, 43);
+                }
             });
         });
+        this.gameClearFlag = gameClearFlag;
     }
 
     startTimer() {
@@ -220,9 +273,9 @@ class Field {
         clearField.forEach((address) => {
             if(gameField[address[0]][address[1]] == null) return false;
             const {pair_x, pair_y} = gameField[address[0]][address[1]];
-            if(pair_x != 1) {
+            if(pair_x) {
                 gameField[pair_x][pair_y].move = true;
-                gameField[pair_x][pair_y].pair_x = 1;
+                gameField[pair_x][pair_y].pair_x = null;
             }
             gameField[address[0]][address[1]] = null;
         });
@@ -233,7 +286,7 @@ class Field {
     }
 
     moveMedic (key = 'Down') {   
-        if(this.gameOverFlag) return;
+        if(this.gameOverFlag || this.gameClearFlag) return;
         var gameField = this.gameField;
 
         var {x_1, x_2, y_1, y_2} = this.medic;
@@ -301,7 +354,43 @@ class Field {
     }
 
     dropdown () {
-        
+        var gameField = this.gameField;
+        var loopFlag;
+        var underRows;
+        do {
+            // doではスコープが効かない気がします。
+            underRows = null;
+            loopFlag = false;
+            for(var row = 17; row > 1; row --) {
+                var rows = gameField[row];
+                rows.forEach((cell, col) => {
+                    if(!underRows) return false;
+                    if(cell && !underRows[col]){
+                        if(cell?.move) {
+                            underRows[col] = Object.assign({}, cell);
+                            gameField[row][col] = null;
+                            loopFlag = true;
+                        } else if(cell.pair_x &&
+                                (!gameField[cell.pair_x + 1][cell.pair_y] || gameField[cell.pair_x][cell.pair_y].pair_y == cell.pair_y)) {
+                            underRows[col] = Object.assign({}, cell);
+                            gameField[row][col] = null;
+                            gameField[cell.pair_x + 1][cell.pair_y] = Object.assign({}, gameField[cell.pair_x][cell.pair_y]);
+                            gameField[cell.pair_x][cell.pair_y] = null;
+
+                            underRows[col].pair_x++;
+                            gameField[cell.pair_x + 1][cell.pair_y].pair_x++;
+
+                            loopFlag = true;
+                        }
+                    }
+                });
+                underRows = rows;
+            }
+            // if(loopFlag) {
+            //     this.fieldUpdate();
+            //     this.sleep();
+            // }
+        } while(loopFlag);
     }
 }
 
