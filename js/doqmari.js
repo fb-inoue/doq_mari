@@ -18,6 +18,7 @@ class Field {
     gameField;
     color = color;
     downTimer;
+    speedUptimer;
     image = [new Image(), new Image()];
     bacteriaImage = [new Image(), new Image(), new Image()];
 
@@ -43,8 +44,6 @@ class Field {
         this.bacteriaImage[1].src = "../doq_mari/img/aokin.png";
         this.bacteriaImage[2].src = "../doq_mari/img/kikin.png";
 
-
-
         const canvas = document.querySelector('canvas');
         this.ctx = canvas.getContext('2d');
 
@@ -65,7 +64,7 @@ class Field {
         this.gameField = gameField;
 
         this.bacterialOutbreak(level);
-        
+        this.startSpeedUpTimer();
         this.newMedicine();
         this.fieldCheck('down');
     } 
@@ -73,6 +72,7 @@ class Field {
     bacterialOutbreak(level) {
         var gameField = this.gameField;
         var bacterialCount = 4 + (4 * level);
+        var createCount = 0;
 
         const rundField = (level) => {
             var lBound = 16 - Math.ceil(level / 2);
@@ -81,16 +81,20 @@ class Field {
             return [row, col];
         }
 
-        for(var i = 0; i < bacterialCount; i++) {
-            var createFlag = true;
-            do {
-                var [row, col] = rundField(level);
-                if(!gameField[row][col]) {
-                    gameField[row][col] = new MedicineAndBug();
-                    createFlag = false;
+        do {
+            var [row, col] = rundField(level);
+            if(!gameField[row][col]) {
+                gameField[row][col] = new MedicineAndBug();
+                if(gameField[row - 2][col]?.color == gameField[row][col].color ||
+                gameField[row][col - 2]?.color == gameField[row][col].color ||
+                gameField[row + 2][col]?.color == gameField[row][col].color ||
+                gameField[row][col + 2]?.color == gameField[row][col].color) {
+                    gameField[row][col] = null;
+                } else {
+                    createCount ++;
                 }
-            } while (createFlag);
-        }
+            }
+        } while (createCount < bacterialCount );
     }
 
     updateMoveFlag() {
@@ -190,6 +194,20 @@ class Field {
             });
         });
         this.gameClearFlag = gameClearFlag;
+    }
+
+    startSpeedUpTimer() {
+        this.speedUptimer = setInterval(this.resetTimer.bind(this), 60000);
+    }
+
+    resetTimer() {
+        if(this.timer == 200) {
+            clearInterval(this.speedUptimer);
+        } else {
+            this.timer -= 100;
+            this.stopTimer();
+            this.startTimer();
+        }
     }
 
     startTimer() {
