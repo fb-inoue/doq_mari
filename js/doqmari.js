@@ -2,21 +2,21 @@ class Doqmari {
     game;
     onClick() {
         var game = this.game;
-        const txtbox = document.getElementById('level');
+        var level = document.getElementById('level').value;
+        if(level > 24) level = 24;
+        const speed = document.getElementById('speed').value;
         if(game) {
             game.stopTimer();
         }
-        this.game = new Field(txtbox.value);
+        this.game = new Field(level, speed);
     }
 }
-
-const color = ['black', 'red', 'blue', 'yellow'];
 
 class Field {
     // インスタンス系
     ctx;
     gameField;
-    color = color;
+    color = ['black', 'red', 'blue', 'yellow'];
     downTimer;
     speedUptimer;
     image = [new Image(), new Image()];
@@ -32,10 +32,12 @@ class Field {
     gameOverFlag = false;
     gameClearFlag = false;
 
-    constructor(level) {
+    constructor(level, speed) {
         window.onkeydown = (event) => {
             this.moveMedic(event.code);
         }
+
+        this.timer -= 100 * speed;
 
         this.image[0].src = "../doq_mari/img/gameover.png";
         this.image[1].src = "../doq_mari/img/gameclear.png";

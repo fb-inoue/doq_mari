@@ -12,7 +12,12 @@
     <div style="margin: 30px;">
         <canvas width="360px" height="810px" style="background-color: black;"></canvas>
         <button onclick="mari.onClick()">スタート</button>
-        <input type="number" max="20" min="1" value="1" id="level">
+        <form>
+            <label>game level: </label>
+            <input style="display: inline-block;" type="number" max="20" min="0" value="0" id="level">
+            <label>speed level: </label>
+            <input style="display: inline-block;" type="number" max="6" min="0" value="0" id="speed">
+        </form>
     </div>
 </body>
 <script>
