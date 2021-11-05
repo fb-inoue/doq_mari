@@ -1,4 +1,4 @@
-class Doqmari {
+class Dr_mari {
     game;
     onClick() {
         var game = this.game;
@@ -18,9 +18,14 @@ class Field {
     gameField;
     color = ['black', 'red', 'blue', 'yellow'];
     downTimer;
-    speedUptimer;
+    speedUpTimer;
     image = [new Image(), new Image()];
     bacteriaImage = [new Image(), new Image(), new Image()];
+
+    // イベント系
+    dropDownTimer;
+    speedUpTimer;
+    clearDownTimer;
 
     // 数値
     medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
@@ -39,12 +44,12 @@ class Field {
 
         this.timer -= 100 * speed;
 
-        this.image[0].src = "../doq_mari/img/gameover.png";
-        this.image[1].src = "../doq_mari/img/gameclear.png";
+        this.image[0].src = "../docMarri/img/gameover.png";
+        this.image[1].src = "../docMarri/img/gameclear.png";
 
-        this.bacteriaImage[0].src = "../doq_mari/img/akakin.png";
-        this.bacteriaImage[1].src = "../doq_mari/img/aokin.png";
-        this.bacteriaImage[2].src = "../doq_mari/img/kikin.png";
+        this.bacteriaImage[0].src = "../docMarri/img/akakin.png";
+        this.bacteriaImage[1].src = "../docMarri/img/aokin.png";
+        this.bacteriaImage[2].src = "../docMarri/img/kikin.png";
 
         const canvas = document.querySelector('canvas');
         this.ctx = canvas.getContext('2d');
@@ -71,13 +76,14 @@ class Field {
         this.fieldCheck('down');
     } 
 
+    // 菌配置メソッド
     bacterialOutbreak(level) {
         var gameField = this.gameField;
         var bacterialCount = 4 + (4 * level);
         var createCount = 0;
 
         const rundField = (level) => {
-            var lBound = 16 - Math.ceil(level / 2);
+            var lBound = 15 - Math.ceil(level / 2);
             var row = lBound + Math.floor(Math.random() * (18 - lBound));
             var col = Math.floor(Math.random() * 8);
             return [row, col];
@@ -99,6 +105,7 @@ class Field {
         } while (createCount < bacterialCount );
     }
 
+    // 移動アクション後、次の動きに対する制限チェック
     updateMoveFlag() {
         var gameField = this.gameField;
         var flagMove = this.flagMove
@@ -116,6 +123,7 @@ class Field {
         flagMove['right'] = (gameField[x_1][right] || gameField[x_2][right] || right === 8);
     }
 
+    // 新しい薬の配置と、ゲームオーバーチェック
     newMedicine () {
         var gameField = this.gameField;
         
@@ -134,6 +142,7 @@ class Field {
         gameField[0][4] = new MedicineAndBug();
     }
 
+    // fieldの状態を確認して次の動作を決定する。
     fieldCheck(key) {
         var gameField = this.gameField;
         var downFlag = this.flagMove['down'];
@@ -149,31 +158,17 @@ class Field {
             gameField[x_2][y_2].pair_y = this.medic.y_1;
 
             this.medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
-
-            var loopFlag = false;
-            loopFlag = this.checkContinue4()
-            do {
-                this.dropdown();
-
-                loopFlag = this.checkContinue4()
-            } while(loopFlag);
-            this.newMedicine();
-        }
-
-        this.fieldUpdate();
-
-        if(this.gameOverFlag){
             this.stopTimer();
-            this.ctx.drawImage(this.image[0], 1, 300, 358, 150);
-        } else if(this.gameClearFlag) {
-            this.stopTimer();
-            this.ctx.drawImage(this.image[1], 1, 300, 358, 150);
-        }else if (!this.timerFlag) {
+            this.checkContinue4();
+        } else if(!this.timerFlag) {
             this.startTimer();
         }
+        this.fieldUpdate();
     }
 
+    // 2次元配列の状態をキャンバスにupdateする
     fieldUpdate() {
+        if(this.gameClearFlag) return;
         var gameField = this.gameField;
         var gameClearFlag = true;
 
@@ -189,22 +184,34 @@ class Field {
                         this.ctx.drawImage(this.bacteriaImage[cell?.color - 1], 1 + (col * 45), 1 + (row * 45), 43, 43);
                         gameClearFlag = false;
                     }
-                } else {
+                } else if(row != 0 || col != 0) {
                     this.ctx.fillStyle = 'black';
                     this.ctx.fillRect(1 + (col * 45), 1 + (row * 45), 43, 43);
                 }
             });
         });
         this.gameClearFlag = gameClearFlag;
+        if(this.gameOverFlag){
+            this.ctx.drawImage(this.image[0], 1, 300, 358, 150);
+            clearInterval(this.speedUpTimer);
+            clearInterval(this.dropDownTimer);
+        }
     }
 
+    // 薬、菌の消去後、下に動けるものを動かすメソッドに対するタイマー
+    startClearDownTimer() {
+        this.clearDownTimer = setInterval(this.dropdown.bind(this), this.timer);
+    }
+
+    // スピードアップさせるためのタイマー
     startSpeedUpTimer() {
-        this.speedUptimer = setInterval(this.resetTimer.bind(this), 60000);
+        this.speedUpTimer = setInterval(this.resetTimer.bind(this), 60000);
     }
 
+    // 落下速度の再設定
     resetTimer() {
         if(this.timer == 200) {
-            clearInterval(this.speedUptimer);
+            clearInterval(this.speedUpTimer);
         } else {
             this.timer -= 100;
             this.stopTimer();
@@ -212,16 +219,19 @@ class Field {
         }
     }
 
+    // 通常時の落下タイマー
     startTimer() {
-        this.downTimer = setInterval(this.moveMedic.bind(this), this.timer);
+        this.dropDownTimer = setInterval(this.moveMedic.bind(this), this.timer);
         this.timerFlag = true;
     }
 
+    // 通常時の落下タイマー削除
     stopTimer() {
-        clearInterval(this.downTimer);
+        clearInterval(this.dropDownTimer);
         this.timerFlag = false;
     }
 
+    // 4つ以上同じ色の菌、薬が連続する場合削除するメソッド
     checkContinue4() {
         var clearField = [];
         var gameField = this.gameField;
@@ -299,14 +309,22 @@ class Field {
             }
             gameField[address[0]][address[1]] = null;
         });
-        var flag = false;
-        if(clearField[0]) flag = true;
-
-        return flag;
+        this.fieldUpdate();
+        if(this.gameClearFlag) {
+            this.ctx.drawImage(this.image[1], 1, 300, 358, 150);
+            clearInterval(this.speedUpTimer);
+        } else if(clearField[0]) {
+            this.startClearDownTimer();
+        } else  {
+            this.newMedicine();
+            this.fieldUpdate();
+            if(!this.timerFlag)this.startTimer();
+        }
     }
 
+    // キーの情報を取得して薬を操作するメソッド
     moveMedic (key = 'Down') {   
-        if(this.gameOverFlag || this.gameClearFlag) return;
+        if(!this.timerFlag) return;
         var gameField = this.gameField;
 
         var {x_1, x_2, y_1, y_2} = this.medic;
@@ -373,44 +391,43 @@ class Field {
         this.fieldCheck(key);
     }
 
+    // 菌、薬が削除された後に、動ける薬が落ちるメソッド
     dropdown () {
         var gameField = this.gameField;
         var loopFlag;
         var underRows;
-        do {
-            // doではスコープが効かない気がします。
-            underRows = null;
-            loopFlag = false;
-            for(var row = 17; row > 1; row --) {
-                var rows = gameField[row];
-                rows.forEach((cell, col) => {
-                    if(!underRows) return false;
-                    if(cell && !underRows[col]){
-                        if(cell?.move) {
-                            underRows[col] = Object.assign({}, cell);
-                            gameField[row][col] = null;
-                            loopFlag = true;
-                        } else if(cell.pair_x &&
-                                (!gameField[cell.pair_x + 1][cell.pair_y] || gameField[cell.pair_x][cell.pair_y].pair_y == cell.pair_y)) {
-                            underRows[col] = Object.assign({}, cell);
-                            gameField[row][col] = null;
-                            gameField[cell.pair_x + 1][cell.pair_y] = Object.assign({}, gameField[cell.pair_x][cell.pair_y]);
-                            gameField[cell.pair_x][cell.pair_y] = null;
 
-                            underRows[col].pair_x++;
-                            gameField[cell.pair_x + 1][cell.pair_y].pair_x++;
+        for(var row = 17; row > 1; row --) {
+            var rows = gameField[row];
+            rows.forEach((cell, col) => {
+                if(!underRows) return false;
+                if(cell && !underRows[col]){
+                    if(cell?.move) {
+                        underRows[col] = Object.assign({}, cell);
+                        gameField[row][col] = null;
+                        loopFlag = true;
+                    } else if(cell.pair_x &&
+                            (!gameField[cell.pair_x + 1][cell.pair_y] || gameField[cell.pair_x][cell.pair_y].pair_y == cell.pair_y)) {
+                        underRows[col] = Object.assign({}, cell);
+                        gameField[row][col] = null;
+                        gameField[cell.pair_x + 1][cell.pair_y] = Object.assign({}, gameField[cell.pair_x][cell.pair_y]);
+                        gameField[cell.pair_x][cell.pair_y] = null;
 
-                            loopFlag = true;
-                        }
+                        underRows[col].pair_x++;
+                        gameField[cell.pair_x + 1][cell.pair_y].pair_x++;
+
+                        loopFlag = true;
                     }
-                });
-                underRows = rows;
-            }
-            // if(loopFlag) {
-            //     this.fieldUpdate();
-            //     this.sleep();
-            // }
-        } while(loopFlag);
+                }
+            });
+            underRows = rows;
+        }
+        if(loopFlag) {
+            this.fieldUpdate();
+        } else {
+            clearInterval(this.clearDownTimer);
+            this.checkContinue4();
+        }
     }
 }
 
