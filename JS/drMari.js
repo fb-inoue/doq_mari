@@ -44,12 +44,12 @@ class Field {
 
         this.timer -= 100 * speed;
 
-        this.image[0].src = "../docMarri/img/gameover.png";
-        this.image[1].src = "../docMarri/img/gameclear.png";
+        this.image[0].src = "../doq_mari/img/gameover.png";
+        this.image[1].src = "../doq_mari/img/gameclear.png";
 
-        this.bacteriaImage[0].src = "../docMarri/img/akakin.png";
-        this.bacteriaImage[1].src = "../docMarri/img/aokin.png";
-        this.bacteriaImage[2].src = "../docMarri/img/kikin.png";
+        this.bacteriaImage[0].src = "../doq_mari/img/akakin.png";
+        this.bacteriaImage[1].src = "../doq_mari/img/aokin.png";
+        this.bacteriaImage[2].src = "../doq_mari/img/kikin.png";
 
         const canvas = document.querySelector('canvas');
         this.ctx = canvas.getContext('2d');
