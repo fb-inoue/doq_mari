@@ -39,7 +39,7 @@ class Field {
 
     constructor(level, speed) {
         window.onkeydown = (event) => {
-            this.moveMedic(event.code);
+            if(this.timerFlag) this.moveMedic(event.code);
         }
 
         this.timer -= 100 * speed;
@@ -138,8 +138,8 @@ class Field {
         gameField[x_1][y_1] = Object.assign({}, gameField[0][3]);
         gameField[x_2][y_2] = Object.assign({}, gameField[0][4]);
 
-        gameField[0][3] = new MedicineAndBug();
-        gameField[0][4] = new MedicineAndBug();
+        gameField[0][3] = new MedicineAndBug(2);
+        gameField[0][4] = new MedicineAndBug(2);
     }
 
     // fieldの状態を確認して次の動作を決定する。
@@ -152,10 +152,18 @@ class Field {
         var {x_1, x_2, y_1, y_2} = this.medic;
 
         if(downFlag && this.flagMove['down'] && key.indexOf('Down') >= 0){
-            gameField[x_1][y_1].pair_x = this.medic.x_2;
-            gameField[x_1][y_1].pair_y = this.medic.y_2;
-            gameField[x_2][y_2].pair_x = this.medic.x_1;
-            gameField[x_2][y_2].pair_y = this.medic.y_1;
+            gameField[1] = new Array(8);
+
+            if(gameField[x_1][y_1] && gameField[x_2][y_2]) {
+                gameField[x_1][y_1].pair_x = this.medic.x_2;
+                gameField[x_1][y_1].pair_y = this.medic.y_2;
+                gameField[x_2][y_2].pair_x = this.medic.x_1;
+                gameField[x_2][y_2].pair_y = this.medic.y_1;
+            } else {
+                x_1 = Math.max(x_1, x_2);
+                gameField[x_1][y_1].move = true;
+            }
+            
 
             this.medic = {x_1 : 0, y_1 : 0, x_2 : 0, y_2 : 0};
             this.stopTimer();
@@ -214,8 +222,10 @@ class Field {
             clearInterval(this.speedUpTimer);
         } else {
             this.timer -= 100;
-            this.stopTimer();
-            this.startTimer();
+            if(this.timerFlag) {
+                this.stopTimer();
+                this.startTimer();
+            }
         }
     }
 
@@ -324,7 +334,7 @@ class Field {
 
     // キーの情報を取得して薬を操作するメソッド
     moveMedic (key = 'Down') {   
-        if(!this.timerFlag) return;
+        if(this.gameOverFlag || this.gameClearFlag) return;
         var gameField = this.gameField;
 
         var {x_1, x_2, y_1, y_2} = this.medic;
@@ -387,6 +397,9 @@ class Field {
         gameField[x_2][y_2] = cell_2;
 
         this.medic = {x_1, y_1, x_2, y_2};
+        if(x_1 == 0) {
+            console.log('A');
+        }
 
         this.fieldCheck(key);
     }
