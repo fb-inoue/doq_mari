@@ -138,8 +138,8 @@ class Field {
         gameField[x_1][y_1] = Object.assign({}, gameField[0][3]);
         gameField[x_2][y_2] = Object.assign({}, gameField[0][4]);
 
-        gameField[0][3] = new MedicineAndBug(2);
-        gameField[0][4] = new MedicineAndBug(2);
+        gameField[0][3] = new MedicineAndBug();
+        gameField[0][4] = new MedicineAndBug();
     }
 
     // fieldの状態を確認して次の動作を決定する。
