@@ -14,4 +14,10 @@ export default defineConfig({
   dev: {
     port: 3000,
   },
+  output: {
+    distPath: {
+      root: 'dist',
+    },
+    assetPrefix: process.env.NODE_ENV === 'production' ? '/doq_mari/' : '/',
+  },
 });
