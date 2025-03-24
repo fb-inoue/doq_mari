@@ -1,0 +1,39 @@
+/*! ./MedicineAndBug */
+
+/*! react/jsx-runtime */
+
+/*! react-dom/client */
+
+/*! ./components/GameCanvas */
+
+/*! ../gameLogic/Field */
+
+/*! ./components/GameControls */
+
+/*! react */
+
+/*! core-js/modules/es.array.push.js */
+
+/*! core-js/modules/esnext.iterator.for-each.js */
+
+/*! react */
+
+/*! react/jsx-runtime */
+
+/*! core-js/modules/esnext.async-iterator.for-each.js */
+
+/*! core-js/modules/esnext.async-iterator.map.js */
+
+/*! core-js/modules/esnext.iterator.constructor.js */
+
+/*! ./styles.css */
+
+/*! core-js/modules/esnext.iterator.map.js */
+
+/*! react */
+
+/*! ./App */
+
+/*! react/jsx-runtime */
+
+/*! react/jsx-runtime */
