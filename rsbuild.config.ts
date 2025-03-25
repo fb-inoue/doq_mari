@@ -16,7 +16,7 @@ export default defineConfig({
   },
   output: {
     distPath: {
-      root: 'dist',
+      root: 'docs',
     },
     assetPrefix: process.env.NODE_ENV === 'production' ? '/doq_mari/' : '/',
   },
